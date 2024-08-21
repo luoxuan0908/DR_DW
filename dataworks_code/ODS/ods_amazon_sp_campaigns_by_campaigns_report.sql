@@ -1,0 +1,65 @@
+--odps sql
+--********************************************************************--
+--author:Ada
+--create time:2024-03-24 19:59:48
+--********************************************************************--
+CREATE TABLE IF NOT EXISTS whde.ods_amazon_sp_campaigns_by_campaigns_report(
+      store_id STRING COMMENT '店铺ID',
+      profile_id STRING COMMENT 'profileId',
+      record_id STRING COMMENT 'recordId',
+      report_id STRING COMMENT 'reportId',
+      report_type STRING COMMENT '广告类型',
+      start_date STRING COMMENT 'time_unit=SUMMARY时有效，摘要开始日期',
+      end_date STRING COMMENT 'time_unit=SUMMARY时有效，摘要结束日期',
+      report_date STRING COMMENT 'time_unit=DAILY时有效，数据具体日期',
+      data_last_update_time STRING COMMENT '亚马逊数据生产时间',
+      seller_id STRING COMMENT '卖家ID',
+      tenant_id STRING COMMENT '租户ID',
+      country_code STRING COMMENT '国家编码',
+      campaign_name STRING COMMENT 'The name associated with a campaign.',
+      campaign_id STRING COMMENT 'The ID associated with a campaign.',
+      campaign_status STRING COMMENT 'The status of a campaign.',
+      campaign_budget_amount STRING COMMENT 'Total budget allocated to the campaign.',
+      campaign_budget_type STRING COMMENT 'One of daily or lifetime.',
+      campaign_rule_based_budget_amount STRING COMMENT 'The value of the rule-based budget for a campaign.',
+      campaign_applicable_budget_rule_id STRING COMMENT 'The ID associated to the active budget rule for a campaign.',
+      campaign_applicable_budget_rule_name STRING COMMENT 'The name associated to the active budget rule for a campaign.',
+      campaign_budget_currency_code STRING COMMENT 'The currency code associated with the campaign.',
+      impressions STRING COMMENT 'Total number of ad impressions.',
+      clicks STRING COMMENT 'Total number of ad clicks.',
+      cost STRING COMMENT 'Total cost of ad clicks. Same as spend.',
+      spend STRING COMMENT 'Total cost of ad clicks. Same as cost.',
+      purchases_1d STRING COMMENT 'Number of attributed conversion events occurring within 1 day of an ad click.',
+      purchases_7d STRING COMMENT 'Number of attributed conversion events occurring within 7 days of an ad click.',
+      purchases_14d STRING COMMENT 'Number of attributed conversion events occurring within 14 days of an ad click.',
+      purchases_30d STRING COMMENT 'Number of attributed conversion events occurring within 30 days of an ad click.',
+      purchases_same_sku_1d STRING COMMENT 'Number of attributed conversion events occurring within 1 day of ad click where the purchased SKU was the same as the SKU advertised.',
+      purchases_same_sku_7d STRING COMMENT 'Number of attributed conversion events occurring within 7 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      purchases_same_sku_14d STRING COMMENT 'Number of attributed conversion events occurring within 14 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      purchases_same_sku_30d STRING COMMENT 'Number of attributed conversion events occurring within 30 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      units_sold_clicks_1d STRING COMMENT 'Total number of units ordered within 1 day of an ad click.',
+      units_sold_clicks_7d STRING COMMENT 'Total number of units ordered within 7 days of an ad click.',
+      units_sold_clicks_14d STRING COMMENT 'Total number of units ordered within 14 days of an ad click. Same as unitsSold14d',
+      units_sold_clicks_30d STRING COMMENT 'Total number of units ordered within 30 days of an ad click.',
+      sales_1d STRING COMMENT 'Total value of sales occurring within 1 day of an ad click.',
+      sales_7d STRING COMMENT 'Total value of sales occurring within 7 days of an ad click.',
+      sales_14d STRING COMMENT 'Total value of sales occurring within 14 days of an ad click.',
+      sales_30d STRING COMMENT 'Total value of sales occurring within 30 days of an ad click.',
+      attributed_sales_same_sku_1d STRING COMMENT 'Total value of sales occurring within 1 day of ad click where the purchased SKU was the same as the SKU advertised.',
+      attributed_sales_same_sku_7d STRING COMMENT 'Total value of sales occurring within 7 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      attributed_sales_same_sku_14d STRING COMMENT 'Total value of sales occurring within 14 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      attributed_sales_same_sku_30d STRING COMMENT 'Total value of sales occurring within 30 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      units_sold_same_sku_1d STRING COMMENT 'Total number of units ordered within 1 day of ad click where the purchased SKU was the same as the SKU advertised.',
+      units_sold_same_sku_7d STRING COMMENT 'Total number of units ordered within 7 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      units_sold_same_sku_14d STRING COMMENT 'Total number of units ordered within 14 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      units_sold_same_sku_30d STRING COMMENT 'Total number of units ordered within 30 days of ad click where the purchased SKU was the same as the SKU advertised.',
+      kindle_edition_normalized_pages_read_14d STRING COMMENT 'Number of attributed Kindle edition normalized pages read within 14 days of ad click.',
+      kindle_edition_normalized_pages_royalties_14d STRING COMMENT 'The estimated royalties of attributed estimated Kindle edition normalized pages within 14 days of ad click.',
+      campaign_bidding_strategy STRING COMMENT 'The bidding strategy associated with a campaign.',
+      cost_per_click STRING COMMENT 'Total cost divided by total number of clicks.',
+      click_through_rate STRING COMMENT 'Clicks divided by impressions.'
+)
+    PARTITIONED BY (ds STRING)
+    STORED AS ALIORC
+    TBLPROPERTIES ('comment'='亚马逊报告 spCampaigns 表，groupBy=campaign')
+    LIFECYCLE 365;
