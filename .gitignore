@@ -26,4 +26,5 @@ bin/
 .vscode/
 
 ### Mac OS ###
-.DS_Store
+.DS_Storedataworks_code/ODS/bak.py
+dataworks_code/ODS/导入数据示例.sql
