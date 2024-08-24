@@ -546,5 +546,110 @@ FROM
 WHERE
     ds = '20240819';
 
+-- temp_scm_ivt_amazon_asin_df 表进行 select distinct
 
 
+
+
+
+WITH tmp_inventory AS (
+    SELECT
+        tenant_id,
+        marketplace_id,
+        marketplace_type,
+        en_country_name,
+        cn_country_name,
+        country_code,
+        seller_id,
+        seller_sku,
+        fnsku,
+        asin,
+        -- 计算FBA总库存 = FBA在库 + FBA在途
+        afn_warehouse_quantity + (afn_inbound_working_quantity + afn_inbound_shipped_quantity + afn_inbound_receiving_quantity) AS afn_total_num,
+        -- FBA在库库存
+        afn_warehouse_quantity AS afn_warehouse_num,
+        -- FBA在途库存
+        (afn_inbound_working_quantity + afn_inbound_shipped_quantity + afn_inbound_receiving_quantity) AS afn_inbound_num
+    FROM
+        amz.mid_scm_ivt_amazon_fba_stock_current_num_df
+    WHERE
+        ds = '20240820'
+),
+tmp_sales AS (
+         SELECT
+             tenant_id,
+             marketplace_id,
+             seller_id,
+             seller_sku,
+             asin,
+             -- 计算库存可售天数
+             SUM(CASE WHEN purchase_time BETWEEN date_add(date_format('20240820', 'yyyymmdd'), -7)  AND date_format('20240820', 'yyyymmdd') THEN ordered_num ELSE 0 END) / 7 AS afnstock_n7d_avg_sale_num,
+             SUM(CASE WHEN purchase_time BETWEEN date_add(date_format('20240820', 'yyyymmdd'), -15) AND date_format('20240820', 'yyyymmdd') THEN ordered_num ELSE 0 END) / 15 AS afnstock_n15d_avg_sale_num,
+             SUM(CASE WHEN purchase_time BETWEEN date_add(date_format('20240820', 'yyyymmdd'), -30) AND date_format('20240820', 'yyyymmdd') THEN ordered_num ELSE 0 END) / 30 AS afnstock_n30d_avg_sale_num,
+             SUM(CASE WHEN purchase_time BETWEEN date_add(date_format('20240820', 'yyyymmdd'), -60) AND date_format('20240820', 'yyyymmdd') THEN ordered_num ELSE 0 END) / 60 AS afnstock_n60d_avg_sale_num
+         FROM
+             amz.mid_amzn_all_orders_df
+         WHERE
+             ds = '20240820'
+           AND purchase_time >= date_add(date_format('20240820', 'yyyymmdd'), -60)
+         GROUP BY
+             tenant_id,
+             marketplace_id,
+             seller_id,
+             seller_sku,
+             asin
+     )
+SELECT
+    I.tenant_id,
+    I.marketplace_id,
+    I.marketplace_type,
+    I.en_country_name,
+    I.cn_country_name,
+    I.country_code,
+    I.seller_id,
+    I.seller_sku,
+    I.fnsku,
+    I.asin,
+    -- FBA总库存
+    I.afn_total_num,
+    -- 在库库存
+    I.afn_warehouse_num,
+    -- 在途库存
+    I.afn_inbound_num,
+    -- 近7天日均销量（用于计算库存可售天数）
+    S.afnstock_n7d_avg_sale_num,
+    -- 近15天日均销量
+    S.afnstock_n15d_avg_sale_num,
+    -- 近30天日均销量
+    S.afnstock_n30d_avg_sale_num,
+    -- 近60天日均销量
+    S.afnstock_n60d_avg_sale_num,
+    -- 库存可售天数的计算（可以选择用不同的时间窗口）
+    CASE
+        WHEN S.afnstock_n7d_avg_sale_num > 0 THEN I.afn_total_num / S.afnstock_n7d_avg_sale_num
+        ELSE NULL
+        END AS stock_days_7d,
+    CASE
+        WHEN S.afnstock_n15d_avg_sale_num > 0 THEN I.afn_total_num / S.afnstock_n15d_avg_sale_num
+        ELSE NULL
+        END AS stock_days_15d,
+    CASE
+        WHEN S.afnstock_n30d_avg_sale_num > 0 THEN I.afn_total_num / S.afnstock_n30d_avg_sale_num
+        ELSE NULL
+        END AS stock_days_30d,
+    CASE
+        WHEN S.afnstock_n60d_avg_sale_num > 0 THEN I.afn_total_num / S.afnstock_n60d_avg_sale_num
+        ELSE NULL
+        END AS stock_days_60d,
+    '20240820' AS data_dt,
+    current_date() AS etl_data_dt
+FROM
+    tmp_inventory I
+        LEFT JOIN
+    tmp_sales S
+    ON
+        I.tenant_id = S.tenant_id
+            AND I.marketplace_id = S.marketplace_id
+            AND I.seller_id = S.seller_id
+            AND I.seller_sku = S.seller_sku
+            AND I.asin = S.asin;
