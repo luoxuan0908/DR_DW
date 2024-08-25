@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_base_marketplace_info_df(
 
 
 
-insert overwrite table amz.dim_base_marketplace_info_df PARTITION (ds='${last_day}')  VALUES
+insert overwrite table amz.dim_base_marketplace_info_df PARTITION (ds='20240822')  VALUES
 ('North America','Canada','加拿大','CA','A2EUQ1WTGCTBG2','CAD','加元','https://www.amazon.ca','America/Los_Angeles','NA')
 ,('North America','United States of America','美国','US','ATVPDKIKX0DER','USD','美元','https://www.amazon.com','America/Los_Angeles','NA')
 ,('North America','Mexico','墨西哥','MX','A1AM78C64UM0Y8','MXN','比索','https://www.amazon.com.mx','America/Los_Angeles','NA')

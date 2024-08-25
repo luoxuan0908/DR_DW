@@ -8,7 +8,7 @@
 
 CREATE TABLE IF NOT EXISTS whde.adm_strategy_add_word_product_ds(
 
-                                                                    row_id	string
+     row_id	string
     ,tenant_id string comment '租户ID'
     ,tenant_name string comment '租户名称'
     ,marketplace_id string comment '市场ID'

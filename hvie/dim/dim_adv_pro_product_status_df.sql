@@ -83,7 +83,7 @@ FROM    (
                              ,serving_status
                              ,create_date
                              ,update_date
-                        FROM     amz.dwd_adv_pro_product_status_df
+                        FROM     amz.dim_adv_pro_product_status_df
                         WHERE   ds = '20240821'
                         UNION ALL
                         SELECT  tenant_id

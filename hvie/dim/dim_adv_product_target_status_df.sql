@@ -111,7 +111,7 @@ FROM    (
                                          ,serving_status
                                          ,create_datetime
                                          ,update_datetime
-                                    FROM    amz.dwd_adv_product_target_status_df
+                                    FROM    amz.dim_adv_product_target_status_df
                                     WHERE   ds = '20240822'
                                     UNION ALL
                                     SELECT  tenant_id

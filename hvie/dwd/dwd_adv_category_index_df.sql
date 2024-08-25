@@ -1,9 +1,5 @@
---odps sql
---********************************************************************--
---author:Ada
---create time:2024-03-03 19:21:12
---********************************************************************--
-CREATE TABLE IF NOT EXISTS whde.adm_amazon_adv_strategy_category_d(
+
+CREATE TABLE IF NOT EXISTS amz.dwd_adv_category_index_df(
     tenant_id STRING COMMENT '租户ID',
     marketplace_id STRING COMMENT '市场ID',
     marketplace_name STRING COMMENT '市场名称',
@@ -20,14 +16,14 @@ CREATE TABLE IF NOT EXISTS whde.adm_amazon_adv_strategy_category_d(
     cate_cpc DECIMAL(18,6) COMMENT '类目CPC',
     cate_acos DECIMAL(18,6) COMMENT '类目ACOS',
     data_dt STRING COMMENT '数据日期',
-    etl_data_dt DATETIME COMMENT '数据加载日期'
+    etl_data_dt date COMMENT '数据加载日期'
     )
     PARTITIONED BY (ds STRING)
-    STORED AS ALIORC
+    STORED AS ORC
     TBLPROPERTIES ('comment'='亚马逊广告类目效果数据（统计最近30天）')
-    LIFECYCLE 30;
+    ;
 
-INSERT OVERWRITE TABLE adm_amazon_adv_strategy_category_d PARTITION (ds = '${bizdate}')
+INSERT OVERWRITE TABLE amz.dwd_adv_category_index_df PARTITION (ds = '20240823')
 SELECT  tenant_id
      ,marketplace_id
      ,marketplace_name
@@ -69,15 +65,38 @@ SELECT  tenant_id
     END AS DECIMAL(18,6)) cate_cpc
      ,CAST(CASE   WHEN SUM(sale_amt) <> 0 THEN SUM(cost) / SUM(sale_amt)
     END AS DECIMAL(18,6)) cate_acos
-     ,'${bizdate}' data_dt
-     ,GETDATE() etl_data_dt
-FROM    whde.adm_amazon_adv_sku_wide_d
-WHERE   ds = '${bizdate}'
-  AND to_char(fba_first_instock_date,'yyyymmdd')<= TO_CHAR(DATEADD(TO_DATE('${bizdate}','yyyymmdd'),-90,'dd'),'yyyymmdd')--限制老品
+     ,'20240823' data_dt
+     ,current_date() etl_data_dt
+FROM    amz.mid_amazon_adv_sku_wide_d
+WHERE   ds = '20240823'
+  AND date_format(fba_first_instock_date,'yyyymmdd')<= date_sub(to_date(from_unixtime(unix_timestamp('20240823', 'yyyyMMdd'))), 90)--限制老品
 GROUP BY tenant_id
        ,marketplace_id
        ,marketplace_name
-       ,ad_type
-       ,currency_code
-       ,category_list
+       ,campaign_budget_currency_code
+       ,CASE   WHEN LENGTH(category_one) > 0
+    AND LENGTH(category_two) > 0
+    AND LENGTH(category_three) > 0
+    AND LENGTH(category_four) > 0
+    AND LENGTH(category_five) > 0
+    AND LENGTH(category_six) > 0 THEN CONCAT(category_one,'>',category_two,'>',category_three,'>',category_four,'>',category_five,'>',category_six)
+               WHEN LENGTH(category_one) > 0
+                   AND LENGTH(category_two) > 0
+                   AND LENGTH(category_three) > 0
+                   AND LENGTH(category_four) > 0
+                   AND LENGTH(category_five) > 0 THEN CONCAT(category_one,'>',category_two,'>',category_three,'>',category_four,'>',category_five)
+               WHEN LENGTH(category_one) > 0
+                   AND LENGTH(category_two) > 0
+                   AND LENGTH(category_three) > 0
+                   AND LENGTH(category_four) > 0 THEN CONCAT(category_one,'>',category_two,'>',category_three,'>',category_four)
+               WHEN LENGTH(category_one) > 0
+                   AND LENGTH(category_two) > 0
+                   AND LENGTH(category_three) > 0 THEN CONCAT(category_one,'>',category_two,'>',category_three)
+               WHEN LENGTH(category_one) > 0
+                   AND LENGTH(category_two) > 0 THEN CONCAT(category_one,'>',category_two)
+               WHEN LENGTH(category_one) > 0 THEN category_one
+               ELSE ''
+    END
+
+
 ;
