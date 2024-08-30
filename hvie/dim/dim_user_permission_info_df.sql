@@ -24,38 +24,37 @@ PARTITIONED BY
 )
 STORED AS ORC;
 
+use amz;
+set hive.compute.query.using.stats=false;
+DROP TABLE IF EXISTS dim_user_permission_info_df_tmp1;
 
+CREATE TABLE IF NOT EXISTS dim_user_permission_info_df_tmp1 AS
+SELECT DISTINCT
+    a.marketplace_id,
+    COALESCE(b.parent_asin, c.parent_asin) AS parent_asin,
+    manager_id,
+    country_code
+FROM ods.ods_report_asin_related_user_df a
+         LEFT OUTER JOIN (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY market_place_id, asin ORDER BY data_dt DESC) AS rn
+    FROM amz.mid_amzn_asin_to_parent_df
+    WHERE ds = '20240828'
+) b
+    ON a.asin = b.asin
+        AND a.marketplace_id = b.market_place_id
+        AND b.rn = 1
+        AND b.parent_asin IS NOT NULL
+LEFT OUTER JOIN (
+    SELECT DISTINCT parent_asin, market_place_id
+    FROM amz.mid_amzn_asin_to_parent_df
+    WHERE ds = '20240828'
+) c
+     ON a.asin = c.parent_asin
+         AND a.marketplace_id = c.market_place_id
+WHERE a.ds = '20240829'
+  AND a.asin <> '';
 
-DROP TABLE IF EXISTS dim_user_permission_info_df_tmp1
-;
-
-
-CREATE TABLE dim_user_permission_info_df_tmp1 AS
-SELECT DISTINCT a.marketplace_id
-              , COALESCE(b.parent_asin, c.parent_asin) parent_asin
-              , manager_id
-              , country_code
-FROM ods.ods_report_asin_related_user_df a -- asin_related_user a
-         LEFT OUTER JOIN (select *
-                          from (select *, ROW_NUMBER() OVER(PARTITION BY market_place_id,asin ORDER BY data_dt desc) rn
-                                from dwd.dwd_prd_asin_to_parent_df -- whde.dwd_amzn_asin_to_parent_df
-                                where ds = '${last_day}') t
-                          where rn = 1
-                            and parent_asin is not null) b
-                         ON a.asin = b.asin
-                             AND a.marketplace_id = b.market_place_id
-         LEFT OUTER JOIN (SELECT DISTINCT parent_asin
-                                        , market_place_id
-                          FROM dwd.dwd_prd_asin_to_parent_df -- dwd_amzn_asin_to_parent_df
-                          WHERE ds = '${last_day}') c
-                         ON a.asin = c.parent_asin
-                             AND a.marketplace_id = c.market_place_id
-WHERE a.ds = '${last_day}'
-  AND a.asin <> ''
-;
-
-INSERT
-OVERWRITE TABLE amz.dim_user_permission_info_df partition (ds = '${last_day}')
+INSERT OVERWRITE TABLE amz.dim_user_permission_info_df partition (ds = '${last_day}')
 SELECT DISTINCT abs(HASH(a.tenant_id, c.profile_id, a.parent_asin, e.manager_id)) id
               , a.tenant_id
               , d.company_name
@@ -77,11 +76,11 @@ SELECT DISTINCT abs(HASH(a.tenant_id, c.profile_id, a.parent_asin, e.manager_id)
     END
               , ''
 FROM (SELECT *
-      FROM dwd.dwd_prd_spu_parent_asin_index_df -- whde.dws_itm_spu_amazon_parent_asin_index_df
-      WHERE ds = '${last_day}') a
+      FROM amz.dwd_prd_parent_asin_index_df -- whde.dws_itm_spu_amazon_parent_asin_index_df
+      WHERE ds = '${last_2_day}') a
          LEFT OUTER JOIN (SELECT *
-                          FROM dwd.dwd_base_seller_sites_store_df -- dwd_sit_shp_amazon_seller_sites_store_df
-                          WHERE ds = '${last_day}') C
+                          FROM amz.dim_base_seller_sites_store_df -- dwd_sit_shp_amazon_seller_sites_store_df
+                          WHERE ds = '${last_2_day}') C
                          ON a.tenant_id = c.tenant_id
                              AND a.marketplace_id = c.marketplace_id
                              AND a.seller_id = c.seller_id
@@ -108,4 +107,3 @@ FROM (SELECT *
                          ON a.tenant_id = d.tenant_id
                              AND e.manager_id = d.store_id
 ;
-

@@ -2,7 +2,7 @@
 --author:luoxuan
 --create time:2024-08-23
 --********************************************************************--
-drop table if exists amz.dim_adv_keyword_target_status_df;
+-- drop table if exists amz.dim_adv_keyword_target_status_df;
 CREATE TABLE IF NOT EXISTS amz.dim_adv_keyword_target_status_df
 (
     tenant_id                STRING COMMENT '租户ID'
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_keyword_target_status_df
     TBLPROPERTIES ('comment' = '广告投放词最新状态，全量表日更新')
 
 ;
-INSERT OVERWRITE TABLE amz.dim_adv_keyword_target_status_df PARTITION (ds = '20240823')
+INSERT OVERWRITE TABLE amz.dim_adv_keyword_target_status_df PARTITION (ds = '${last_day}')
 SELECT
       a.tenant_id
      ,a.profile_id
@@ -50,7 +50,7 @@ SELECT
      ,a.native_language_keyword
      ,a.create_datetime
      ,a.update_datetime
-     ,'20240823' data_dt
+     ,'${last_day}' data_dt
      ,current_date() etl_data_dt
 FROM
     (SELECT tenant_id
@@ -99,7 +99,7 @@ FROM
                                   ,create_datetime
                                   ,update_datetime
                              FROM   amz.dim_adv_keyword_target_status_df
-                             WHERE   ds = '20240821'
+                             WHERE   ds = '${last_2_day}'
                              UNION ALL
                              SELECT  tenant_id
                                   ,profile_id
@@ -116,7 +116,7 @@ FROM
                                   ,create_datetime
                                   ,update_datetime
                              FROM    ods.ods_report_amzn_ad_keyword_data_df
-                             WHERE   ds ='20240823'
+                             WHERE   ds ='${last_day}'
                          ) t1
              ) t2
      WHERE   rn = 1
@@ -128,7 +128,7 @@ FROM
              ,ad_group_id
              ,top_cost_parent_asin parent_asin
         FROM    amz.mid_amazon_adv_sku_wide_d
-        WHERE   ds = '20240822'
+        WHERE   ds = '${last_2_day}'
         GROUP BY tenant_id
                ,profile_id
                ,campaign_id
@@ -173,7 +173,7 @@ FROM (
               , cost
          FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds -- 9968
          WHERE ds >= '20240722'
-           AND ds <= '20240823'                                            --只保存最近30天
+           AND ds <= '${last_day}'                                            --只保存最近30天
      ) a
          LEFT JOIN (SELECT tenant_id
                          , profile_id
@@ -189,7 +189,7 @@ FROM (
   LEFT JOIN (
      select * from
         (select * ,market_place_id marketplace_id,ROW_NUMBER() OVER (PARTITION BY market_place_id,asin ORDER BY data_dt desc) rn
-         from amz.mid_amzn_asin_to_parent_df where ds ='20240823') t
+         from amz.mid_amzn_asin_to_parent_df where ds ='${last_day}') t
      where rn =1 and parent_asin is not null
 ) g
       ON b.marketplace_id = g.marketplace_id
@@ -204,7 +204,7 @@ SELECT  tenant_id
      ,ad_group_id
      ,top_cost_parent_asin parent_asin
 FROM    amz.mid_amazon_adv_sku_wide_d
-WHERE   ds = '20240822'
+WHERE   ds = '${last_2_day}'
 GROUP BY tenant_id
        ,profile_id
        ,campaign_id

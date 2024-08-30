@@ -51,10 +51,8 @@ CREATE TABLE IF NOT EXISTS amz.mid_amazon_adv_sku_wide_d(
   ;
 
 
--- DROP TABLE IF EXISTS adm_amazon_adv_sku_wide_ds_20240822_tem1
-;
 
--- CREATE TABLE adm_amazon_adv_sku_wide_ds_20240822_tem1 AS
+-- CREATE TABLE adm_amazon_adv_sku_wide_ds_${last_day}_tem1 AS
 set mapreduce.map.memory.mb=4096;
 set mapreduce.reduce.memory.mb=4096;
 
@@ -82,26 +80,27 @@ SELECT
     , ad_id
     , advertised_asin
     , COALESCE(b.parent_asin, g.parent_asin)  parent_asin
-    , selling_price
-    , title
-    , link
-    , SPLIT(breadcrumbs_feature, '>')[0] category_one
-    , SPLIT(breadcrumbs_feature, '>')[1] category_two
-    , SPLIT(breadcrumbs_feature, '>')[2] category_three
-    , SPLIT(breadcrumbs_feature, '>')[3] category_four
-    , SPLIT(breadcrumbs_feature, '>')[4] category_five
-    , SPLIT(breadcrumbs_feature, '>')[5] category_six
-    , main_image_url
+    , b.selling_price
+    , b.title
+    , b.link
+    , SPLIT(b.breadcrumbs_feature, '>')[0] category_one
+    , SPLIT(b.breadcrumbs_feature, '>')[1] category_two
+    , SPLIT(b.breadcrumbs_feature, '>')[2] category_three
+    , SPLIT(b.breadcrumbs_feature, '>')[3] category_four
+    , SPLIT(b.breadcrumbs_feature, '>')[4] category_five
+    , SPLIT(b.breadcrumbs_feature, '>')[5] category_six
+    , b.main_image_url
 --     , fba_first_instock_date
 --     , fba_stock_num
-    , advertised_sku
-    , impressions
-    , clicks
-    , cost
-    , w7d_sale_amt                            sale_amt
-    , w7d_sale_same_sku_amt                   same_sku_sale_amt
-    , w7d_units_sold_clicks                   order_num
-    , w7d_units_sold_same_sku                 same_sku_order_num
+    , a.advertised_sku
+    , a.impressions
+    , a.clicks
+    , a.cost
+    , a.w7d_sale_amt                            sale_amt
+    , a.w7d_sale_same_sku_amt                   same_sku_sale_amt
+    , a.w7d_units_sold_clicks                   order_num
+    , a.w7d_units_sold_same_sku                 same_sku_order_num
+
 FROM (
     SELECT
           a.tenant_id
@@ -161,11 +160,14 @@ FROM (
               , attributed_sales_same_sku_7d as w7d_sale_same_sku_amt
               , purchases_same_sku_7d as w7d_units_sold_clicks
               , units_sold_same_sku_7d as w7d_units_sold_same_sku
-        FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds
-        WHERE ds between from_unixtime(unix_timestamp('20240822', 'yyyyMMdd') - 30 * 86400)  and '20240822'
+       FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds
+        WHERE ds between date_format(from_unixtime(unix_timestamp('${last_day}', 'yyyyMMdd') - 30 * 86400),'yyyyMMdd')  and '${last_day}' -- 124546
+--           and market_place_id = 'ATVPDKIKX0DER'
+--           and seller_id = 'AI6EVRVB80LCZ'
+--           and advertised_asin = 'B0D1YF6W7M'
            -- ds >= '20240815' and ds <= '20240821' --只保存最近30天
         -- 将 20240815 转换为日期 再减去 30 天 hive sql
-       -- SELECT from_unixtime(unix_timestamp('20240822', 'yyyyMMdd') - 30 * 86400) AS result_date;
+       -- SELECT from_unixtime(unix_timestamp('${last_day}', 'yyyyMMdd') - 30 * 86400) AS result_date;
 
 
 
@@ -180,11 +182,12 @@ FROM (
                        , seller_id
                        , seller_name
                   FROM amz.dim_base_seller_sites_store_df
-                  WHERE ds ='20240822' -- MAX_PT('whde.dwd_sit_shp_amazon_seller_sites_store_df')
+                  WHERE ds ='${last_day}' -- MAX_PT('whde.dwd_sit_shp_amazon_seller_sites_store_df')
     ) b --取站点、店铺
                  ON a.profile_id = b.profile_id AND a.tenant_id = b.tenant_id
     ) a
     LEFT JOIN (
+         select * from (
                  select
                    market_place_id as marketplace_id,
                    seller_id,
@@ -200,14 +203,22 @@ FROM (
                    ROW_NUMBER() OVER(PARTITION BY market_place_id, DIM_asin ORDER BY created_at DESC) AS rn
                         FROM
                             ods.ods_crawler_amazon_product_details_df
-                        WHERE ds = '20240821'
-    ) b --父aisn、以及类目、库存
+                        WHERE ds = '${last_day}'
+--                         and market_place_id = 'A13V1IB3VIYZZH'
+--                         and seller_id = 'A2MGVMX7S4A416'
+--                         and dim_asin = 'B07WCKS3DX'
+--                           and market_place_id = 'ATVPDKIKX0DER'
+--                           and seller_id = 'AI6EVRVB80LCZ'
+--                           and dim_asin = 'B0D1YF6W7M'
+                       ) t
+                  where t.rn =1
+) b --父aisn、以及类目、库存
 
                   ON
                        a.marketplace_id = b.marketplace_id
                       AND a.seller_id = b.seller_id
                       AND a.advertised_asin = b.asin
-                      and b.rn = 1
+
     LEFT JOIN (
                 SELECT tenant_id
                      , profile_id
@@ -231,7 +242,7 @@ FROM (
                                THEN '固定竞价'
                    END campaign_biding_strategy
                    FROM amz.dim_adv_campaign_status_df
-                   WHERE ds ='20240822' -- MAX_PT('whde.adm_amazon_adv_camp_status_df')
+                   WHERE ds ='${last_day}' -- MAX_PT('whde.adm_amazon_adv_camp_status_df')
     ) e --取广告活动的最新状态
                   ON a.profile_id = e.profile_id
                       AND a.tenant_id = e.tenant_id
@@ -242,7 +253,7 @@ FROM (
                           , ad_group_id
                           , ad_group_name
                      FROM amz.dim_adv_ad_group_status_df
-                     WHERE ds = '20240822'--  MAX_PT('whde.adm_amazon_adv_ad_group_status_df')
+                     WHERE ds = '${last_day}'--  MAX_PT('whde.adm_amazon_adv_ad_group_status_df')
     ) e1 --取广告组的最新状态
                     ON a.profile_id = e1.profile_id
                         AND a.tenant_id = e1.tenant_id
@@ -253,15 +264,15 @@ FROM (
                                    market_place_id marketplace_id,
                                    ROW_NUMBER()    OVER(PARTITION BY market_place_id,asin ORDER BY data_dt desc) rn
                             from amz.mid_amzn_asin_to_parent_df
-                            where ds = '20240822') t
+                            where ds = '${last_day}') t
                       where rn = 1
                         and parent_asin is not null
     ) g --补充子asin对应的父aisn
                      ON a.marketplace_id = g.marketplace_id
                          AND a.advertised_asin = g.asin
 )
-
-INSERT OVERWRITE TABLE amz.mid_amazon_adv_sku_wide_d PARTITION (ds = '20240822')
+-- select * from amazon_adv_sku_wide_ds_tem1 --where ds = '${last_day}'
+INSERT OVERWRITE TABLE amz.mid_amazon_adv_sku_wide_d PARTITION (ds = '${last_day}')
 SELECT  a.tenant_id
      ,a.profile_id
      ,a.marketplace_id
@@ -304,7 +315,7 @@ SELECT  a.tenant_id
      ,a.same_sku_sale_amt
      ,a.order_num
      ,a.same_sku_order_num
-     ,'20240822'
+     ,'${last_day}'
      ,current_date()
      ,b.parent_asin AS top_cost_parent_asin
 FROM    amazon_adv_sku_wide_ds_tem1 a
@@ -344,12 +355,14 @@ FROM    amazon_adv_sku_wide_ds_tem1 a
                             AND     a.ad_group_id = b.ad_group_id
 ;
 
--- DROP TABLE IF EXISTS adm_amazon_adv_sku_wide_ds_20240822_tem1
+-- DROP TABLE IF EXISTS adm_amazon_adv_sku_wide_ds_${last_day}_tem1
 ;
 
-select count(1) from amz.mid_amazon_adv_sku_wide_d where ds='20240822'; -- 10279
+select count(1) from amz.mid_amazon_adv_sku_wide_d where ds='${last_day}'; -- 10279 23499
 
--- select count(*) from adm_amazon_adv_sku_wide_d where ds='20240822'; -- 29106
+--select count(*) from adm_amazon_adv_sku_wide_d where ds='${last_day}'; --  23499
+
+-- select count(*) from adm_amazon_adv_sku_wide_d where ds='${last_day}'; -- 29106
 
 
 
@@ -357,3 +370,84 @@ select ds,count(1)
 FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds
 group by ds
 order by ds desc;
+
+select date_format(from_unixtime(unix_timestamp('${last_day}', 'yyyyMMdd') - 30 * 86400),'yyyyMMdd')
+
+
+select count(*) ,ds   FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds
+WHERE ds between from_unixtime(unix_timestamp('${last_day}', 'yyyyMMdd') - 30 * 86400)  and '${last_day}'
+group by ds
+order by ds asc;
+
+
+SELECT
+    count(1) AS count_all,
+    COUNT(DISTINCT tenant_id) AS count_tenant_id,
+    COUNT(DISTINCT profile_id) AS count_profile_id,
+    COUNT(DISTINCT marketplace_id) AS count_marketplace_id,
+    COUNT(DISTINCT marketplace_name) AS count_marketplace_name,
+    COUNT(DISTINCT seller_id) AS count_seller_id,
+    COUNT(DISTINCT seller_name) AS count_seller_name,
+    COUNT(DISTINCT report_date) AS count_report_date,
+    COUNT(DISTINCT country_code) AS count_country_code,
+    COUNT(DISTINCT portfolio_id) AS count_portfolio_id,
+    COUNT(DISTINCT campaign_id) AS count_campaign_id,
+    COUNT(DISTINCT campaign_name) AS count_campaign_name,
+    COUNT(DISTINCT campaign_status) AS count_campaign_status,
+    COUNT(DISTINCT campaign_biding_strategy) AS count_campaign_biding_strategy,
+    COUNT(DISTINCT ad_mode) AS count_ad_mode,
+    COUNT(DISTINCT campaign_budget_amt) AS count_campaign_budget_amt,
+    COUNT(DISTINCT campaign_budget_type) AS count_campaign_budget_type,
+    COUNT(DISTINCT campaign_budget_currency_code) AS count_campaign_budget_currency_code,
+    COUNT(DISTINCT ad_group_id) AS count_ad_group_id,
+    COUNT(DISTINCT ad_group_name) AS count_ad_group_name,
+    COUNT(DISTINCT ad_id) AS count_ad_id,
+    COUNT(DISTINCT advertised_asin) AS count_advertised_asin,
+    COUNT(DISTINCT parent_asin) AS count_parent_asin,
+    COUNT(DISTINCT selling_price) AS count_selling_price,
+    COUNT(DISTINCT title) AS count_title,
+    COUNT(DISTINCT link) AS count_link,
+    COUNT(DISTINCT category_one) AS count_category_one,
+    COUNT(DISTINCT category_two) AS count_category_two,
+    COUNT(DISTINCT category_three) AS count_category_three,
+    COUNT(DISTINCT category_four) AS count_category_four,
+    COUNT(DISTINCT category_five) AS count_category_five,
+    COUNT(DISTINCT category_six) AS count_category_six,
+    COUNT(DISTINCT main_image_url) AS count_main_image_url,
+    COUNT(DISTINCT fba_first_instock_date) AS count_fba_first_instock_date,
+    COUNT(DISTINCT asin_fba_stock_num) AS count_asin_fba_stock_num,
+    COUNT(DISTINCT advertised_sku) AS count_advertised_sku,
+    COUNT(DISTINCT impressions) AS count_impressions,
+    COUNT(DISTINCT clicks) AS count_clicks,
+    COUNT(DISTINCT cost) AS count_cost,
+    COUNT(DISTINCT sale_amt) AS count_sale_amt,
+    COUNT(DISTINCT same_sku_sale_amt) AS count_same_sku_sale_amt,
+    COUNT(DISTINCT order_num) AS count_order_num,
+    COUNT(DISTINCT same_sku_order_num) AS count_same_sku_order_num,
+    COUNT(DISTINCT data_dt) AS count_data_dt,
+    COUNT(DISTINCT etl_data_dt) AS count_etl_data_dt,
+    COUNT(DISTINCT top_cost_parent_asin) AS count_top_cost_parent_asin
+FROM amz.mid_amazon_adv_sku_wide_d WHERE ds='${last_day}';
+
+
+select ds,count(1)
+    from ods.ods_report_amzn_ad_product_data_df
+group by ds
+order by  ds
+
+select * from amz.mid_amazon_adv_sku_wide_d  WHERE ds='${last_day}'
+and marketplace_id ='ATVPDKIKX0DER'
+and seller_id ='AI6EVRVB80LCZ'
+and advertised_asin ='B0D1YF6W7M';
+
+
+
+select
+ t.*,
+    ROW_NUMBER() OVER(PARTITION BY market_place_id, DIM_asin ORDER BY created_at DESC) AS rn
+FROM
+    ods.ods_crawler_amazon_product_details_df t
+WHERE ds = '${last_day}'
+                        and market_place_id = 'ATVPDKIKX0DER'
+                        and seller_id = 'AI6EVRVB80LCZ'
+                        and dim_asin = 'B0D1YF6W7M'

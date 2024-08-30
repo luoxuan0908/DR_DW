@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_base_seller_sites_store_df(
     TBLPROPERTIES ('comment'='烽火系统中亚马逊的店铺站点信息');
 
 
-INSERT OVERWRITE TABLE amz.dim_base_seller_sites_store_df PARTITION (ds='20240822')
+INSERT OVERWRITE TABLE amz.dim_base_seller_sites_store_df PARTITION (ds='${last_day}')
 select distinct abs(hash(tenant_id,profile_id)) id
               ,a.tenant_id
               ,a.profile_id
@@ -64,12 +64,12 @@ select distinct abs(hash(tenant_id,profile_id)) id
               ,'租户超级管理员' modifier
               ,0 is_deleted
               ,0 is_enabled
-              ,'20240822' data_dt
+              ,'${last_day}' data_dt
               ,current_date() etl_data_dt
               ,'SC' store_type
-from (select * from ods.ods_report_authorization_account_df where ds = '20240822' )a
-         left outer join ( select * from dim.dim_base_marketplace_info_df  where ds = '20240822' ) b
+from (select * from ods.ods_report_authorization_account_df where ds = '${last_day}' )a
+         left outer join ( select * from amz.dim_base_marketplace_info_df  where ds = '${last_2_day}' ) b
                          on a.marketplace_id = b.market_place_id
 ;
 
-select count(*) from amz.dim_base_seller_sites_store_df where ds = '20240822'
+select count(*) from amz.dim_base_seller_sites_store_df where ds = '${last_day}'

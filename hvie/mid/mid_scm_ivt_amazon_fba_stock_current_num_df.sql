@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS amz.mid_scm_ivt_amazon_fba_stock_current_num_df(
     STORED AS ORC
     TBLPROPERTIES ('comment'='FBA实时库存明细表（参考dwd_scm_ivt_fba_stock_current_num_df的处理逻辑）') ;
 
-INSERT OVERWRITE TABLE  amz.mid_scm_ivt_amazon_fba_stock_current_num_df PARTITION (ds = '${last_day}')
+INSERT OVERWRITE TABLE  amz.mid_scm_ivt_amazon_fba_stock_current_num_df PARTITION (ds = '20240827')
 SELECT
     tenant_id,
     report_id,
@@ -110,7 +110,7 @@ FROM
              cast(afn_inbound_receiving_quantity as BIGINT ) afn_inbound_receiving_quantity,
              'report'data_src,
              'get_fba_myi_unsuppressed_inventory_data'table_src,
-             '${last_day}'data_dt,
+             '20240827'data_dt,
              current_date() etl_data_dt,
 
              --//新增的字段
@@ -156,7 +156,7 @@ FROM
                  case when afn_fulfillable_quantity_remote = '' then null else afn_fulfillable_quantity_remote end as afn_fulfillable_quantity_remote,
                  case when tenant_id = '' then null else tenant_id end as tenant_id
              from ods.ods_report_get_fba_myi_unsuppressed_inventory_data_df -- whde.get_fba_myi_unsuppressed_inventory_data
-             where  ds = '${last_day}'
+             where  ds = '20240827'
                and afn_listing_exists ='Yes'
             ) t
     ) T1
@@ -167,8 +167,9 @@ FROM
           ,country_en_name  en_country_name
           ,country_cn_name cn_country_name
           ,country_code
-     FROM dim.dim_base_marketplace_info_df  where  ds = '${last_day}'  -- whde.dim_marketplace_info_df
+     FROM amz.dim_base_marketplace_info_df  where  ds = '20240827'  -- whde.dim_marketplace_info_df
     )T2
     ON T1.marketplace_id=T2.marketplace_id
 where T1.RANK_ID=1
 ;
+

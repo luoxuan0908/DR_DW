@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS amz.mid_trd_ord_amazon_sale_info_df(
     tenant_id STRING COMMENT '租户ID',
     seller_id STRING COMMENT '卖家ID',
@@ -66,8 +67,6 @@ CREATE TABLE IF NOT EXISTS amz.mid_trd_ord_amazon_sale_info_df(
     TBLPROPERTIES ('comment'='亚马逊销售数据汇总表')
 ;
 
-
-
 with temp_dws_trd_ord_amazon_sale_info_df_orders as (
 SELECT tenant_id
      ,seller_id
@@ -80,118 +79,66 @@ SELECT tenant_id
      ,country_code
      ,country_cn_name as cn_country_name
      ,currency,
-     --,parent_asin
---      ,sum(case when to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then ordered_num else 0 end) as n1d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n7d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n15d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n30d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n60d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n90d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n180d_sale_num
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as n365d_sale_num
---
---      ,sum(case when to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then item_amt else 0 end) as n1d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n7d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n15d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n30d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n60d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n90d_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n180_sale_amt
---      ,sum(case when purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as n365_sale_amt
---
---      ,sum(case when fulfillment_channel = 'Amazon' and to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then ordered_num else 0 end) as afn_n1d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n7d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n15d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n30d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n60d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n90d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n180d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as afn_n365d_sale_num
---      ,sum(case when fulfillment_channel = 'Amazon' and to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then item_amt else 0 end) as afn_n1d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n7d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n15d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n30d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n60d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n90d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n180d_sale_amt
---      ,sum(case when fulfillment_channel = 'Amazon' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as afn_n365d_sale_amt
---
---      ,sum(case when fulfillment_channel = 'Merchant' and to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then ordered_num else 0 end) as mfn_n1d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n7d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n15d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n30d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n60d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n90d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n180d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then ordered_num else 0 end) as mfn_n365d_sale_num
---      ,sum(case when fulfillment_channel = 'Merchant' and to_char(purchase_time,'yyyymmdd') = to_char(dateadd(to_date('20240822','yyyymmdd'),-1,'dd'),'yyyymmdd') then item_amt else 0 end) as mfn_n1d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-7,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n7d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-15,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n15d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-30,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n30d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-60,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n60d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-90,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n90d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-180,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n180d_sale_amt
---      ,sum(case when fulfillment_channel = 'Merchant' and  purchase_time >= dateadd(to_date('20240822','yyyymmdd'),-365,'dd') and purchase_time < to_date('20240822','yyyymmdd')then item_amt else 0 end) as mfn_n365d_sale_amt
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) = 0 then ordered_num else 0 end) as n1d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as n7d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as n15d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as n30d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as n60d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as n90d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as n180d_sale_num,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as n365d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) = 0 then ordered_num else 0 end) as n1d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as n7d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as n15d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as n30d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as n60d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as n90d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as n180d_sale_num,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as n365d_sale_num,
 
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) = 0 then item_amt else 0 end) as n1d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as n7d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as n15d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as n30d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as n60d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as n90d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as n180d_sale_amt,
-       sum(case when datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as n365d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) = 0 then item_amt else 0 end) as n1d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as n7d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as n15d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as n30d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as n60d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as n90d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as n180d_sale_amt,
+       sum(case when datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as n365d_sale_amt,
 
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) = 0 then ordered_num else 0 end) as afn_n1d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as afn_n7d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as afn_n15d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as afn_n30d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as afn_n60d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as afn_n90d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as afn_n180d_sale_num,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as afn_n365d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) = 0 then ordered_num else 0 end) as afn_n1d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as afn_n7d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as afn_n15d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as afn_n30d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as afn_n60d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as afn_n90d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as afn_n180d_sale_num,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as afn_n365d_sale_num,
 
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) = 0 then item_amt else 0 end) as afn_n1d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as afn_n7d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as afn_n15d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as afn_n30d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as afn_n60d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as afn_n90d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as afn_n180d_sale_amt,
-       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as afn_n365d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) = 0 then item_amt else 0 end) as afn_n1d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as afn_n7d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as afn_n15d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as afn_n30d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as afn_n60d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as afn_n90d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as afn_n180d_sale_amt,
+       sum(case when fulfillment_channel = 'Amazon' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as afn_n365d_sale_amt,
 
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) = 0 then ordered_num else 0 end) as mfn_n1d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as mfn_n7d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as mfn_n15d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as mfn_n30d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as mfn_n60d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as mfn_n90d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as mfn_n180d_sale_num,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as mfn_n365d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) = 0 then ordered_num else 0 end) as mfn_n1d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then ordered_num else 0 end) as mfn_n7d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then ordered_num else 0 end) as mfn_n15d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then ordered_num else 0 end) as mfn_n30d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then ordered_num else 0 end) as mfn_n60d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then ordered_num else 0 end) as mfn_n90d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then ordered_num else 0 end) as mfn_n180d_sale_num,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then ordered_num else 0 end) as mfn_n365d_sale_num,
 
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) = 0 then item_amt else 0 end) as mfn_n1d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as mfn_n7d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as mfn_n15d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as mfn_n30d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as mfn_n60d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as mfn_n90d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as mfn_n180d_sale_amt,
-       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('2024-08-22' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as mfn_n365d_sale_amt
-
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) = 0 then item_amt else 0 end) as mfn_n1d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 7 then item_amt else 0 end) as mfn_n7d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 15 then item_amt else 0 end) as mfn_n15d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 30 then item_amt else 0 end) as mfn_n30d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 60 then item_amt else 0 end) as mfn_n60d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 90 then item_amt else 0 end) as mfn_n90d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 180 then item_amt else 0 end) as mfn_n180d_sale_amt,
+       sum(case when fulfillment_channel = 'Merchant' and datediff(cast('${last_day_format}' as date), purchase_time) between 1 and 365 then item_amt else 0 end) as mfn_n365d_sale_amt
+-- select count(1) as total_num
 from  (select * from amz.mid_amzn_all_orders_df   --dwd_trd_ord_amazon_raw_order_info_df
-       where ds = '20240822'
+       where ds = '${last_day}'
          and ordered_num >0
          and nvl(order_status,'') <> 'Canceled'
-      )a
-    left outer join (select * from amz.dim_base_marketplace_info_df where ds = '20240822') b
+      )a -- 75973  73279
+    left  join (select * from amz.dim_base_marketplace_info_df where ds = '${last_day}') b
       on a.marketplace_id = b.market_place_id
 group by tenant_id
        ,seller_id
@@ -204,7 +151,7 @@ group by tenant_id
        ,country_cn_name
        ,currency
 )
-insert overwrite table amz.mid_trd_ord_amazon_sale_info_df partition(ds = '20240822')
+insert overwrite table amz.mid_trd_ord_amazon_sale_info_df partition(ds = '${last_day}')
 select  a1.tenant_id                                                     -- '租户ID',
      ,a1.seller_id                                                     -- '卖家ID',
      ,a1.marketplace_id                                                -- '站点ID',
@@ -264,7 +211,7 @@ select  a1.tenant_id                                                     -- '租
      ,cast(a1.mfn_n90d_sale_amt   as decimal(18,6)) as mfn_n90d_sale_amt      -- '自发货近90天销售额',
      ,cast(a1.mfn_n180d_sale_amt  as decimal(18,6)) as mfn_n180d_sale_amt     -- '自发货近180天销售额',
      ,cast(a1.mfn_n365d_sale_amt  as decimal(18,6)) as mfn_n365d_sale_amt     -- '自发货近365天销售额'
-     ,'20240822' data_dt                                                        -- 数据日期
+     ,'${last_day}' data_dt                                                        -- 数据日期
      ,current_date() AS etl_data_dt                                                    -- 数据加载日期
 from temp_dws_trd_ord_amazon_sale_info_df_orders a1 
 left join (
@@ -276,7 +223,7 @@ left join (
                         ORDER BY data_dt DESC
                         ) AS rn
              FROM amz.mid_amzn_asin_to_parent_df
-             WHERE ds = '20240822'
+             WHERE ds = '${last_day}'
          ) t
     WHERE rn = 1
 ) a2
@@ -284,4 +231,4 @@ on a1.marketplace_id=a2.market_place_id
     and a1.asin=a2.asin
 ;
 
-select  count(*) from amz.mid_trd_ord_amazon_sale_info_df; -- 5237
+-- select  count(*) from amz.mid_trd_ord_amazon_sale_info_df; -- 5237  10515

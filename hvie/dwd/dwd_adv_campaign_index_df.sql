@@ -75,7 +75,7 @@ FROM
     ) t1
         left join (
         SELECT *
-        FROM dim.dim_base_marketplace_info_df
+        FROM amz.dim_base_marketplace_info_df
         WHERE ds = '20240821'
     ) t2 ON t1.marketplace_id = t2.market_place_id
         left join (

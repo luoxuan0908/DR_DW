@@ -10,6 +10,7 @@ CREATE TABLE if not exists amz.dwd_prd_asin_sku_index_df (
     seller_id STRING COMMENT '卖家ID',
     seller_name STRING COMMENT '卖家名称',
     seller_sku STRING COMMENT 'SKU',
+    parent_asin STRING COMMENT '父ASIN',
 
     market_place_type STRING COMMENT '站点类型',
     market_place_website STRING COMMENT '站点链接',
@@ -21,12 +22,8 @@ CREATE TABLE if not exists amz.dwd_prd_asin_sku_index_df (
     time_zone STRING COMMENT '时区',
     endpoint_code STRING COMMENT '站点缩写',
 
-    fba_total_num INT COMMENT 'FBA总库存量',
-    fba_inbound_num INT COMMENT 'FBA入库总数量',
-    fba_warehouse_num INT COMMENT 'FBA仓库库存量',
-    fba_first_instock_days INT COMMENT '首次入库日期至今的天数',
-    fba_instock_cnt INT COMMENT 'FBA入库次数',
-    afn_fulfillable_quantity DOUBLE COMMENT 'AFN可配送库存量',
+
+
     color STRING COMMENT '商品颜色',
     size STRING COMMENT '商品尺寸',
     order_num_rank INT COMMENT '订单数量排名',
@@ -41,6 +38,7 @@ CREATE TABLE if not exists amz.dwd_prd_asin_sku_index_df (
     link STRING COMMENT '商品链接',
     brand STRING COMMENT '商品品牌',
     main_image_url STRING COMMENT '主图URL',
+
     n1d_sale_num BIGINT COMMENT '过去1天的销量',
     n1d_sale_amt DECIMAL(18, 6) COMMENT '过去1天的销售金额',
     n7d_sale_num BIGINT COMMENT '过去7天的销量',
@@ -56,7 +54,36 @@ CREATE TABLE if not exists amz.dwd_prd_asin_sku_index_df (
     n180d_sale_num BIGINT COMMENT '过去180天的销量',
     n180d_sale_amt DECIMAL(18, 6) COMMENT '过去180天的销售金额',
     n365d_sale_num BIGINT COMMENT '过去365天的销量',
-    n365d_sale_amt DECIMAL(18, 6) COMMENT '过去365天的销售金额'
+    n365d_sale_amt DECIMAL(18, 6) COMMENT '过去365天的销售金额',
+
+
+    afnstock_n1d_sale_num BIGINT COMMENT '近1天销量（剔除大促）_计算FBA库存天数',
+    afnstock_n7d_avg_sale_num DECIMAL(18,6) COMMENT '近7天日均销量（剔除大促）_计算FBA库存天数',
+    afnstock_n15d_avg_sale_num DECIMAL(18,6) COMMENT '近15天日均销量（剔除大促）_计算FBA库存天数',
+    afnstock_n30d_avg_sale_num DECIMAL(18,6) COMMENT '近30天日均销量（剔除大促）_计算FBA库存天数',
+    afnstock_n60d_avg_sale_num DECIMAL(18,6) COMMENT '近60天日均销量（剔除大促）_计算FBA库存天数',
+
+    fba_first_instock_time timestamp COMMENT 'FBA首单入库时间',
+    fba_instock_cnt BIGINT COMMENT 'FBA入库次数',
+    afn_total_num BIGINT COMMENT 'FBA总计(FBA在库+FBA在途）',
+    afn_warehouse_num BIGINT COMMENT 'FBA在库(FBA可售+FBA不可售+FBA预留+FBA货件入库差异)',
+    afn_fulfillable_num BIGINT COMMENT 'FBA可售',
+
+    afn_unsellable_num BIGINT COMMENT 'FBA不可售',
+    afn_reserved_num BIGINT COMMENT 'FBA预留(和3个预留拆分的加和数据会略有差异，不是一张表）',
+    afn_reserved_customerorders_num BIGINT COMMENT 'FBA预留_为买家订单预留的商品数量',
+
+    afn_reserved_fc_transfers_num BIGINT COMMENT 'FBA预留_正在从一个运营中心转运至另一运营中心的商品数量',
+    afn_reserved_fc_processing_num BIGINT COMMENT 'FBA预留_搁置在运营中心等待进行其他处理的商品数量，包括与移除订单关联的商品',
+    afn_researching_num BIGINT COMMENT 'FBA货件入库差异',
+    afn_inbound_num BIGINT COMMENT 'FBA在途',
+    afn_inbound_working_num BIGINT COMMENT 'FBA在途_入境工作数量',
+
+    afn_inbound_shipped_num BIGINT COMMENT 'FBA在途_入境的装船数量',
+    afn_inbound_receiving_num BIGINT COMMENT 'FBA在途_入境接待量',
+
+
+    etl_data_dt date COMMENT '数据加载日期'
     )  COMMENT '子asin宽表'
 partitioned by (ds string)
 STORED AS orc;
@@ -282,8 +309,8 @@ WITH all_asin AS (
          ,fba_instock_days		--FBA在库天数
          ,fba_instock_num
 
-    FROM amz.temp_scm_ivt_amazon_asin_df
-    WHERE ds='20240821'
+    FROM amz.mid_scm_ivt_amazon_asin_df
+    WHERE ds='20240827'
 --       and seller_id ='A2MGVMX7S4A416'
 -- -- and marketplace_id ='A13V1IB3VIYZZH'
 --       and asin ='B07WZTYXQ2'
@@ -302,6 +329,7 @@ SELECT
     t1.seller_id as seller_id,
     t2.seller_name as seller_name,
     t1.seller_sku as seller_sku,
+    t8.parent_asin as parent_asin,
 
     t3.market_place_type ,
     t3.marketplace_website ,
@@ -313,12 +341,7 @@ SELECT
     t3.timezone ,
     t3.endpoint_code ,
 
-    t7.afn_total_num as fba_total_num,
-    t7.afn_inbound_num as fba_inbound_num,
-    t7.afn_warehouse_num as fba_warehouse_num,
-    t7.fba_instock_days,
-    t7.fba_instock_num as fba_instock_cnt,
-    t7.afn_fulfillable_num as afn_fulfillable_quantity,
+
     null as color,
     null as size,
     t6.order_num_rank as order_num_rank,
@@ -349,6 +372,32 @@ SELECT
     t5.n180d_sale_amt as n180d_sale_amt,
     t5.n365d_sale_num as n365d_sale_num,
     t5.n365d_sale_amt as n365d_sale_amt
+      ,t7.afnstock_n1d_sale_num
+     ,t7.afnstock_n7d_avg_sale_num
+     ,t7.afnstock_n15d_avg_sale_num
+     ,t7.afnstock_n30d_avg_sale_num
+     ,t7.afnstock_n60d_avg_sale_num
+
+        ,t7.fba_instock_num
+        ,t7.fba_instock_days
+
+        ,t7.afn_total_num
+        ,t7.afn_warehouse_num
+        ,t7.afn_fulfillable_num
+        ,t7.afn_unsellable_num
+        ,t7.afn_reserved_num
+
+        ,0  afn_reserved_customerorders_num
+        ,0  afn_reserved_fc_transfers_num
+        ,0  afn_reserved_fc_processing_num
+
+        ,t7.afn_researching_num
+
+        ,t7.afn_inbound_num
+        ,t7.afn_inbound_working_num
+        ,t7.afn_inbound_shipped_num
+        ,t7.afn_inbound_receiving_num
+        ,current_date() as etl_date
 -- select count(1)
 FROM
     all_asin t1
@@ -363,7 +412,8 @@ ON t1.tenant_id = t2.tenant_id AND t1.seller_id = t2.seller_id AND t1.marketplac
     left join sale_rank t6
     ON t1.tenant_id = t6.tenant_id AND t1.seller_id = t6.seller_id AND t1.marketplace_id = t6.marketplace_id AND t1.asin = t6.asin
 left join temp_scm_ivt_amazon_asin_df t7
-ON t1.seller_id = t7.seller_id AND t3.marketplace_type2 = t7.marketplace_type2 AND t1.asin = t7.asin and t1.seller_sku = t7.seller_sku;
+ON t1.seller_id = t7.seller_id AND t3.marketplace_type2 = t7.marketplace_type2 AND t1.asin = t7.asin and t1.seller_sku = t7.seller_sku
+left join master_slave t8 on t1.marketplace_id = t8.marketplace_id and t1.asin = t8.asin;
 
 select count(1) from amz.dwd_prd_asin_sku_index_df where ds = '20240821'; -- 7388  7182  6797
 

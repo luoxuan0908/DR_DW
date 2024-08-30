@@ -56,11 +56,11 @@ select   marketplace_id
        , top3_clicked_category top_category3
        , report_date
        , row_number()          over(partition by marketplace_id,search_term order by report_date desc,cast(search_frequency_rank as bigint) asc) as rk
-        from ods.ods_report_search_data_df
-        where ds = '20240822'
+      from ods.ods_report_search_data_df
+        where ds = '${last_day}' -- 10679289
         )
 
-insert overwrite table amz.mid_itm_spu_amazon_search_keyword_info_ws partition (ws = '20240822')
+insert overwrite table amz.mid_itm_spu_amazon_search_keyword_info_ws partition (ws = '${last_day}')
 select marketplace_id
      ,search_term
      ,search_frequency_rank
@@ -114,3 +114,4 @@ group by marketplace_id
 ;
 
 
+select count(1) from amz.mid_itm_spu_amazon_search_keyword_info_ws where ws = '${last_day}';

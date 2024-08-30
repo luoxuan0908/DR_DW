@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS amz.mid_itm_sku_amazon_skw_asin_rank_info_hs(
 ;
 
 
-INSERT OVERWRITE TABLE amz.mid_itm_sku_amazon_skw_asin_rank_info_hs PARTITION (hs='20240823')
+INSERT OVERWRITE TABLE amz.mid_itm_sku_amazon_skw_asin_rank_info_hs PARTITION (hs='${last_day}')
 SELECT
     search_term,
     data_date,
@@ -92,9 +92,9 @@ SELECT
     frequent period,
     '' postcode
 from  ods.ods_crawler_amazon_search_result_df
-WHERE ds ='20240814'
-  and date_format(data_date,'yyyymmdd') ='20240814'
+WHERE ds ='${last_day}'
+  and date_format(data_date,'yyyymmdd') ='${last_day}'
 ;
 
 select count(*) from  ods.ods_crawler_amazon_search_result_df
-WHERE ds ='20240814'
+WHERE ds ='${last_day}'

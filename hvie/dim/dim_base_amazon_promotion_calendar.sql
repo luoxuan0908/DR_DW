@@ -1,16 +1,16 @@
-
 CREATE TABLE IF NOT EXISTS amz.dim_base_amazon_promotion_calendar(
      promotion_day STRING COMMENT '',
      promotion_name STRING COMMENT ''
-)
+) partitioned BY (ds STRING)
     STORED AS orc
     TBLPROPERTIES ('comment'='大促日期')
 ;
 
 
 
-
-INSERT OVERWRITE TABLE  amz.dim_base_amazon_promotion_calendar VALUES
+INSERT OVERWRITE TABLE  amz.dim_base_amazon_promotion_calendar
+       PARTITION (ds ='${last_day}')
+       VALUES
 ('20231120','黑五网一'),
 ('20231121','黑五网一'),
 ('20231122','黑五网一'),

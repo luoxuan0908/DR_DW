@@ -1,5 +1,5 @@
 
-drop table if exists amz.mid_scm_ivt_amazon_asin_df;
+-- drop table if exists amz.mid_scm_ivt_amazon_asin_df;
 CREATE TABLE IF NOT EXISTS amz.mid_scm_ivt_amazon_asin_df(
     tenant_id STRING COMMENT '租户ID',
     marketplace_id STRING COMMENT '站点ID',
@@ -66,8 +66,8 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
          ,afn_researching_quantity --'AFN调查中数量'
          ,afn_reserved_future_supply  --库存通过库存预售运往亚马逊运营中心途中，其可供买家查找和购买的商品数量
          ,afn_future_supply_buyable --库存通过库存预售运往亚马逊运营中心途中，买家已购买该库存商品的数量
-    FROM  amz.mid_scm_ivt_amazon_fba_stock_current_num_df
-    WHERE ds='20240822'
+   FROM  amz.mid_scm_ivt_amazon_fba_stock_current_num_df
+    WHERE ds='${last_day}'
       AND
         (
             marketplace_type='Far East'
@@ -141,7 +141,7 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
 
               ,ROW_NUMBER()OVER(PARTITION BY tenant_id,seller_id,asin,seller_sku,marketplace_type ORDER BY afn_total_quantity DESC ) AS RANK_ID
          FROM  amz.mid_scm_ivt_amazon_fba_stock_current_num_df
-         WHERE ds='20240822'
+         WHERE ds='${last_day}'
            and marketplace_type='Europe'
            and marketplace_id<>'A1F83G8C2ARO7P' --不是英国站点的，取库存最多的那个国家
         ) T1
@@ -250,7 +250,7 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
               ,afn_future_supply_buyable --库存通过库存预售运往亚马逊运营中心途中，买家已购买该库存商品的数量
          FROM  dws_scm_ivt_amazon_asin_zt_tmp2
         ) T1
-) --select  * from dws_scm_ivt_amazon_asin_zt_tmp3
+) -- select  * from dws_scm_ivt_amazon_asin_zt_tmp3
    ,dws_scm_ivt_amazon_asin_zt_tmp4 as (
     SELECT
         COUNT(DISTINCT n1d_flag) AS n1d_CNT
@@ -261,20 +261,20 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
     FROM
         (
             SELECT
-                case WHEN raw_purchase_time = date_format(date_add('2024-08-21',-1),'yyyyMMdd')
+                case WHEN raw_purchase_time = date_format(date_add('${last_day_format}',-1),'yyyyMMdd')
                          then raw_purchase_time end as n1d_flag
 
-                 ,case when raw_purchase_time >= date_format(date_add('2024-08-21',-7),'yyyyMMdd') and raw_purchase_time < '20240822'
+                 ,case when raw_purchase_time >= date_format(date_add('${last_day_format}',-7),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                            then raw_purchase_time end  as n7d_flag
 
 
-                 ,case when   raw_purchase_time >=  date_format(date_add('2024-08-21',-15),'yyyyMMdd') and raw_purchase_time < '20240822'
+                 ,case when   raw_purchase_time >=  date_format(date_add('${last_day_format}',-15),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                            then raw_purchase_time end as n15d_flag
 
-                 ,case when raw_purchase_time >=  date_format(date_add('2024-08-21',-30),'yyyyMMdd') and raw_purchase_time < '20240822'
+                 ,case when raw_purchase_time >=  date_format(date_add('${last_day_format}',-30),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                            then raw_purchase_time end as n30d_flag
 
-                 ,case when raw_purchase_time >=  date_format(date_add('2024-08-21',-60),'yyyyMMdd') and raw_purchase_time < '20240822'
+                 ,case when raw_purchase_time >=  date_format(date_add('${last_day_format}',-60),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                            then raw_purchase_time end as n60d_flag
 
             FROM
@@ -283,8 +283,8 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
                     FROM
                         (SELECT  date_format(purchase_time,'yyyyMMdd')  raw_purchase_time
                          from  amz.mid_amzn_all_orders_df
-                         where ds = '20240822'
-                           AND   purchase_time >= date_add('2024-08-21',-60)
+                         where ds = '${last_day}'
+                           AND   purchase_time >= date_add('${last_day_format}',-60)
                         ) T1
                             LEFT JOIN
                         (SELECT
@@ -297,20 +297,20 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
                     GROUP BY raw_purchase_time
                 )M
             GROUP BY
-                case WHEN raw_purchase_time = date_format(date_add('2024-08-21',-1),'yyyyMMdd')
+                case WHEN raw_purchase_time = date_format(date_add('${last_day_format}',-1),'yyyyMMdd')
                          then raw_purchase_time end
 
-                   ,case when raw_purchase_time >= date_format(date_add('2024-08-21',-7),'yyyyMMdd') and raw_purchase_time < '20240822'
+                   ,case when raw_purchase_time >= date_format(date_add('${last_day_format}',-7),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                              then raw_purchase_time end
 
 
-                   ,case when   raw_purchase_time >=  date_format(date_add('2024-08-21',-15),'yyyyMMdd') and raw_purchase_time < '20240822'
+                   ,case when   raw_purchase_time >=  date_format(date_add('${last_day_format}',-15),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                              then raw_purchase_time end
 
-                   ,case when raw_purchase_time >=  date_format(date_add('2024-08-21',-30),'yyyyMMdd') and raw_purchase_time < '20240822'
+                   ,case when raw_purchase_time >=  date_format(date_add('${last_day_format}',-30),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                              then raw_purchase_time end
 
-                   ,case when raw_purchase_time >=  date_format(date_add('2024-08-21',-60),'yyyyMMdd') and raw_purchase_time < '20240822'
+                   ,case when raw_purchase_time >=  date_format(date_add('${last_day_format}',-60),'yyyyMMdd') and raw_purchase_time < '${last_day}'
                              then raw_purchase_time end
 
 
@@ -322,12 +322,12 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
          ,seller_sku
          ,asin
          ,case when marketplace_id='A1F83G8C2ARO7P' then  '英国'  else marketplace_type end as marketplace_type2
-         ,sum(case when raw_purchase_FLAG = date_format(date_add('2024-08-21',-1),'yyyyMMdd') then ordered_num else 0 end) as afnstock_n1d_sale_num
-         ,sum(case when raw_purchase_FLAG >= date_format(date_add('2024-08-21',-7),'yyyyMMdd') and raw_purchase_FLAG < '20240822' then ordered_num else 0 end) as afnstock_n7d_sale_num
-         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('2024-08-21',-15),'yyyyMMdd')  and raw_purchase_FLAG <  '20240822' then ordered_num else 0 end) as afnstock_n15d_sale_num
-         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('2024-08-21',-30),'yyyyMMdd')  and raw_purchase_FLAG < '20240822' then ordered_num else 0 end) as afnstock_n30d_sale_num
-         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('2024-08-21',-60),'yyyyMMdd')  and raw_purchase_FLAG < '20240822' then ordered_num else 0 end) as afnstock_n60d_sale_num
--- select  raw_purchase_FLAG,raw_purchase_time,date_format(date_add('2024-08-21',-1),'yyyyMMdd'), date_format(date_add('2024-08-21',-7),'yyyyMMdd')
+         ,sum(case when raw_purchase_FLAG = date_format(date_add('${last_day_format}',-1),'yyyyMMdd') then ordered_num else 0 end) as afnstock_n1d_sale_num
+         ,sum(case when raw_purchase_FLAG >= date_format(date_add('${last_day_format}',-7),'yyyyMMdd') and raw_purchase_FLAG < '${last_day}' then ordered_num else 0 end) as afnstock_n7d_sale_num
+         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('${last_day_format}',-15),'yyyyMMdd')  and raw_purchase_FLAG <  '${last_day}' then ordered_num else 0 end) as afnstock_n15d_sale_num
+         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('${last_day_format}',-30),'yyyyMMdd')  and raw_purchase_FLAG < '${last_day}' then ordered_num else 0 end) as afnstock_n30d_sale_num
+         ,sum(case when  raw_purchase_FLAG >= date_format(date_add('${last_day_format}',-60),'yyyyMMdd')  and raw_purchase_FLAG < '${last_day}' then ordered_num else 0 end) as afnstock_n60d_sale_num
+-- select  raw_purchase_FLAG,raw_purchase_time,date_format(date_add('${last_day_format}',-1),'yyyyMMdd'), date_format(date_add('${last_day_format}',-7),'yyyyMMdd')
     FROM
         (select   tenant_id
               ,seller_id
@@ -340,10 +340,10 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
               ,date_format(purchase_time,'yyyyMMdd')  raw_purchase_FLAG
               ,marketplace_type
          from  amz.mid_amzn_all_orders_df
-         where ds = '20240822'
+         where ds = '${last_day}'
            and ordered_num >0
            and nvl(order_status,'') <> 'Canceled'
-           AND  purchase_time >= date_add('2024-08-21',-60)
+           AND  purchase_time >= date_add('${last_day_format}',-60)
         )T1
 
             LEFT JOIN
@@ -387,12 +387,12 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
               ,afnstock_n15d_sale_num
               ,afnstock_n30d_sale_num
               ,afnstock_n60d_sale_num
-              ,'20240822' ds
+              ,'${last_day}' ds
          FROM dws_scm_ivt_amazon_asin_zt_tmp5
         )T1
             LEFT JOIN
         (SELECT
-             '20240822' DS
+             '${last_day}' DS
               ,n1d_CNT
               ,n7d_CNT
               ,n15d_CNT
@@ -409,14 +409,14 @@ with dws_scm_ivt_amazon_asin_zt_tmp1 as (
          ,MIN(operation_date) AS fba_first_instock_date
          ,COUNT(DISTINCT operation_date) fba_instock_num
     FROM   amz.mid_scm_ivt_amazon_ledger_detail_view_df
-    WHERE   ds='20240820'
+    WHERE   ds='${last_day}'
       AND     event_type = 'Receipts' --是已接收库存
     GROUP BY tenant_id
            ,marketplace_id
            ,seller_id
            ,asin
 )
-insert overwrite table amz.mid_scm_ivt_amazon_asin_df partition(ds='20240822')
+insert overwrite table amz.mid_scm_ivt_amazon_asin_df partition(ds='${last_day}')
 SELECT
     T1.tenant_id,
     T1.marketplace_id,
@@ -453,7 +453,7 @@ SELECT
     T2.fba_first_instock_date,
     T2.fba_instock_num,
     datediff(current_date(),T2.fba_first_instock_date) as fba_instock_days,
-    '20240822' data_dt,
+    '${last_day}' data_dt,
     current_date()  etl_data_dt
 
 
@@ -470,3 +470,5 @@ FROM dws_scm_ivt_amazon_asin_zt_tmp3  T1
                        AND T1.seller_id=T2.seller_id
                        AND T1.asin=T2.asin
 ;
+
+select count(1) from amz.mid_scm_ivt_amazon_asin_df where ds ='${last_day}'

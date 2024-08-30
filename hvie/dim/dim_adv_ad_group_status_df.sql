@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_ad_group_status_df
     TBLPROPERTIES ('comment' = '广告组最新状态表，日更新全量表')
 ;
 
-INSERT OVERWRITE TABLE amz.dim_adv_ad_group_status_df PARTITION (ds = '20240823')
+INSERT OVERWRITE TABLE amz.dim_adv_ad_group_status_df PARTITION (ds = '20240827')
 SELECT  tenant_id
      ,profile_id
      ,campaign_id
@@ -47,7 +47,7 @@ SELECT  tenant_id
      ,serving_status
      ,create_datetime
      ,update_datetime
-     ,'20240823' data_dt
+     ,'20240827' data_dt
      ,current_date() etl_data_dt
 FROM    (
             SELECT  tenant_id
@@ -81,7 +81,7 @@ FROM    (
                              ,create_datetime
                              ,update_datetime
                         FROM    amz.dim_adv_ad_group_status_df
-                        WHERE   ds = '20240822'
+                        WHERE   ds = '20240826'
                         UNION ALL
                         SELECT distinct tenant_id
                                       ,profile_id
@@ -98,10 +98,13 @@ FROM    (
                                       ,create_datetime
                                       ,update_datetime
                         FROM    ods.ods_report_amzn_ad_group_data_df
-                        WHERE   ds ='20240823'
+                        WHERE   ds ='20240827'
                     ) a
         ) b
 WHERE   rn = 1
 ;
 
-select count(1) from amz.dim_adv_ad_group_status_df where ds ='20240823'; -- 257
+select count(1) from amz.dim_adv_ad_group_status_df where ds ='20240827'; -- 257
+
+
+select * from amz.dim_adv_ad_group_status_df where ds ='20240827';

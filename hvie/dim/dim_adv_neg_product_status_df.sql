@@ -1,9 +1,4 @@
---odps sql 
---********************************************************************--
---author:Ada
---create time:2024-03-03 19:16:49
---********************************************************************--
-drop table if exists amz.dim_adv_neg_product_status_df;
+--drop table if exists amz.dim_adv_neg_product_status_df;
 CREATE TABLE IF NOT EXISTS amz.dim_adv_neg_product_status_df
 (
     tenant_id            STRING COMMENT '租户ID'
@@ -16,7 +11,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_neg_product_status_df
     ,expression          STRING COMMENT '投放表达式'
     ,resolved_expression STRING COMMENT '相关表达式'
     ,asin                STRING COMMENT '投放品'
-    ,`status`            STRING COMMENT '否品状态:ENABLED, PAUSED, ARCHIVED'
+    ,status            STRING COMMENT '否品状态:ENABLED, PAUSED, ARCHIVED'
     ,serving_status      STRING COMMENT '广告活动实时状态'
     ,create_datetime     timestamp COMMENT '创建时间'
     ,update_datetime     timestamp COMMENT '更新时间'
@@ -33,7 +28,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_neg_product_status_df
 
 ;
 
-INSERT OVERWRITE TABLE amz.dim_adv_neg_product_status_df PARTITION (ds = '20240822')
+INSERT OVERWRITE TABLE amz.dim_adv_neg_product_status_df PARTITION (ds = '${last_day}')
 SELECT  a.tenant_id
      ,a.profile_id
      ,a.campaign_id
@@ -48,7 +43,7 @@ SELECT  a.tenant_id
      ,serving_status
      ,create_datetime
      ,update_datetime
-     ,'20240822' data_dt
+     ,'${last_day}' data_dt
      ,current_date() etl_data_dt
      ,parent_asin
 FROM    (
@@ -98,7 +93,7 @@ FROM    (
                                          ,create_datetime
                                          ,update_datetime
                                     FROM   amz.dim_adv_neg_product_status_df
-                                    WHERE   ds = '20240821'
+                                    WHERE   ds = '${last_2_day}'
                                     UNION ALL
                                     SELECT  tenant_id
                                          ,profile_id
@@ -115,7 +110,7 @@ FROM    (
                                          ,create_datetime
                                          ,update_datetime
                                     FROM    ods.ods_report_amzn_ad_negproduct_data_df
-                                    WHERE   ds = '20240822'
+                                    WHERE   ds = '${last_day}'
                                 ) t1
                     )  t2
             WHERE   rn = 1
@@ -155,8 +150,8 @@ FROM    (
                                     , advertised_sku
                                     , cost
                                FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds -- 9968
-                               WHERE ds >= '20240722'
-                                 AND ds <= '20240822' -- 只保存最近30天
+                               WHERE ds >= '${last_30_day}'
+                                 AND ds <= '${last_day}' -- 只保存最近30天
                            ) a
                                LEFT JOIN (
                           SELECT tenant_id
@@ -168,7 +163,7 @@ FROM    (
                                , seller_name
                                , ds
                           FROM amz.dim_base_seller_sites_store_df
-                          WHERE ds = '20240822'
+                          WHERE ds = '${last_day}'
                       ) b ON a.profile_id = b.profile_id
                           AND a.tenant_id = b.tenant_id
                                LEFT JOIN (
@@ -179,7 +174,7 @@ FROM    (
                               ORDER BY data_dt DESC
                               ) AS rn
                           FROM amz.mid_amzn_asin_to_parent_df
-                          WHERE ds = '20240822'
+                          WHERE ds = '${last_day}'
                       ) g ON b.marketplace_id = g.marketplace_id
                           AND a.advertised_asin = g.asin
                       WHERE g.rn = 1

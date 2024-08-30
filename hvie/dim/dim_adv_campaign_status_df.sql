@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_campaign_status_df
     TBLPROPERTIES ('comment' = '广告活动最新状态表，全量日更新')
 ;
 
-INSERT OVERWRITE TABLE amz.dim_adv_campaign_status_df PARTITION (ds = '20240823')
+INSERT OVERWRITE TABLE amz.dim_adv_campaign_status_df PARTITION (ds = '${last_day}')
 SELECT  tenant_id
      ,profile_id
      ,ad_type
@@ -63,7 +63,7 @@ SELECT  tenant_id
      ,serving_status
      ,create_datetime
      ,update_datetime
-     ,'20240823' data_dt
+     ,'${last_day}' data_dt
      ,current_date() etl_data_dt
 FROM    (
             SELECT  tenant_id
@@ -119,7 +119,7 @@ FROM    (
                              ,create_datetime
                              ,updated_datetime update_datetime
                         FROM    amz.dim_adv_campaign_status_df
-                        WHERE   ds = '20240822'
+                        WHERE   ds = '${last_2_day}'
                         UNION ALL
                         SELECT  distinct tenant_id
                                        ,profile_id
@@ -174,12 +174,12 @@ FROM    (
                                          ,update_datetime as updated_datetime
                                          ,'report' data_src
                                          ,'amzn_ad_campaign_data' table_src
-                                         ,'${bizdate}' data_dt
+                                         ,'${last_day}' data_dt
                                          ,current_date() etl_data_dt
                                     FROM    (
                                                 SELECT  *
                                                 FROM    ods.ods_report_amzn_ad_campaign_data_df
-                                                WHERE   ds = '20240823' --SUBSTR(hs,1,8) = SUBSTR('${bizdate}',1,8)
+                                                WHERE   ds = '${last_day}' --SUBSTR(hs,1,8) = SUBSTR('${bizdate}',1,8)
                                             ) a
                                 ) t1
                     ) t2
@@ -188,8 +188,8 @@ WHERE   rn = 1
 ;
 
 
-select count(1) from amz.dim_adv_campaign_status_df WHERE   ds = '20240823'; -- 176
-select * from amz.dim_adv_campaign_status_df WHERE   ds = '20240823';
+select count(1) from amz.dim_adv_campaign_status_df WHERE   ds = '20240827''${last_day}'; -- 176
+select * from amz.dim_adv_campaign_status_df WHERE   ds = '${last_day}';
 
 
 
@@ -225,4 +225,4 @@ SELECT
     COUNT(DISTINCT update_datetime) AS distinct_update_datetime,
     COUNT(DISTINCT ds) AS distinct_pt
 FROM ods.ods_report_amzn_ad_campaign_data_df
-WHERE   ds = '20240823'
+WHERE   ds = '${last_day}'

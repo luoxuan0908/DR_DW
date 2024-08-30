@@ -26,10 +26,12 @@ CREATE TABLE IF NOT EXISTS amz.dim_stg_main_all_df(
     budget_label STRING COMMENT '预算标签',
     adv_period_label STRING COMMENT '广告时长标签',
     ctr_label STRING COMMENT 'CTR标签')
+    PARTITIONED BY (ds STRING)
     STORED AS ORC
     TBLPROPERTIES ('comment'='广告策略(主表)');
 
-insert OVERWRITE table amz.dim_stg_main_all_df VALUES
+insert OVERWRITE table amz.dim_stg_main_all_df partition(ds='${last_day}')
+VALUES
  ('45d20b1d2cc2d52e74b3cbf1750a2e31','1515669048','新品期_利润最大化_手动投放_投放词_库存充足_ _有效点击_低转化_ _ _ _大词_ _  高ACOS 2周以上 ','新品期','利润最大化','手动投放','投放词','库存充足',null,'有效点击','低转化',null,null,null,'大词',null,null,'NP_STOP_TARGET','暂停投放词','PAUSE_PLACEMENT',current_date(),null,'高ACOS',null,'2周以上',null)
 ,('45d20b1d2cc2d52e74b3cbf1750a2e31','689289196','新品期_利润最大化_手动投放_投放词_库存充足_ _有效点击_低转化_ _ _ _小词_ _  高ACOS 2周以上 ','新品期','利润最大化','手动投放','投放词','库存充足',null,'有效点击','低转化',null,null,null,'小词',null,null,'NP_STOP_TARGET','暂停投放词','PAUSE_PLACEMENT',current_date(),null,'高ACOS',null,'2周以上',null)
 ,('45d20b1d2cc2d52e74b3cbf1750a2e31','658754807','新品期_利润最大化_手动投放_投放品_库存充足_ _有效点击_低转化_ _ _ _ _ _  高ACOS 2周以上 ','新品期','利润最大化','手动投放','投放品','库存充足',null,'有效点击','低转化',null,null,null,null,null,null,'NP_STOP_TARGET','暂停投放品','PAUSE_PLACEMENT',current_date(),null,'高ACOS',null,'2周以上',null)

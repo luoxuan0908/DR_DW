@@ -1,9 +1,4 @@
---odps sql 
---********************************************************************--
---author:Ada
---create time:2024-03-03 19:18:33
---********************************************************************--
-drop table if exists amz.dim_adv_product_target_status_df;
+
 CREATE TABLE IF NOT EXISTS amz.dim_adv_product_target_status_df
 (
     tenant_id            STRING COMMENT '租户ID'
@@ -20,7 +15,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_product_target_status_df
     ,category            STRING COMMENT '投放类目'
     ,brand               STRING COMMENT '投放品牌'
     ,parent_asin         STRING COMMENT '推广品对应的父aisn'
-    ,`status`            STRING COMMENT '投放品状态:ENABLED, PAUSED, ARCHIVED'
+    ,status            STRING COMMENT '投放品状态:ENABLED, PAUSED, ARCHIVED'
     ,serving_status      STRING COMMENT '广告活动实时状态'
     ,create_datetime     timestamp COMMENT '创建时间'
     ,update_datetime     timestamp COMMENT '更新时间'
@@ -35,7 +30,24 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_product_target_status_df
     TBLPROPERTIES ('comment' = '广告投放品最新状态表，全量表日更新')
 ;
 
-INSERT OVERWRITE TABLE amz.dim_adv_product_target_status_df PARTITION (ds = '20240822')
+-- YARN 配置
+set yarn.scheduler.maximum-allocation-mb=8192;
+set yarn.scheduler.maximum-allocation-vcores=4;
+set yarn.nodemanager.resource.memory-mb=65536;
+set yarn.nodemanager.resource.cpu-vcores=16;
+
+-- MapReduce 配置
+set mapreduce.map.memory.mb=4096;
+set mapreduce.reduce.memory.mb=8192;
+set mapreduce.map.java.opts=-Xmx3072m;
+set mapreduce.reduce.java.opts=-Xmx6144m;
+
+-- Hive 配置
+set hive.auto.convert.join.noconditionaltask.size=268435456;
+set hive.exec.reducers.bytes.per.reducer=67108864;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.tez.container.size=8192;
+INSERT OVERWRITE TABLE amz.dim_adv_product_target_status_df PARTITION (ds = '${last_day}')
 SELECT  a.tenant_id
      ,target_id
      ,a.profile_id
@@ -54,7 +66,7 @@ SELECT  a.tenant_id
      ,serving_status
      ,create_datetime
      ,update_datetime
-     ,'20240822' data_dt
+     ,'${last_day}' data_dt
      ,current_date() etl_data_dt
 FROM    (
             SELECT  tenant_id
@@ -112,7 +124,7 @@ FROM    (
                                          ,create_datetime
                                          ,update_datetime
                                     FROM    amz.dim_adv_product_target_status_df
-                                    WHERE   ds = '20240822'
+                                    WHERE   ds = '${last_day}'
                                     UNION ALL
                                     SELECT  tenant_id
                                          ,target_id
@@ -157,7 +169,7 @@ FROM    (
                                                    current_date() as update_datetime,
                                                    "report" data_src
                                                        ,"dwd_amzn_sp_targeting_by_targeting_report_ds" table_src
-                                                       ,'20240822' data_dt
+                                                       ,'${last_day}' data_dt
                                                        ,current_date()  etl_data_dt
                                                FROM   (select *,ROW_NUMBER() OVER(PARTITION BY tenant_id,profile_id,campaign_id,ad_group_id,keyword_id ORDER BY report_date desc) AS rn
                                                        from amz.mid_amzn_sp_targeting_by_targeting_report_ds
@@ -205,8 +217,8 @@ FROM    (
                                     , advertised_sku
                                     , cost
                                FROM amz.mid_amzn_sp_advertised_product_by_advertiser_report_ds -- 9968
-                               WHERE ds >= '20240722'
-                                 AND ds <= '20240822' -- 只保存最近30天
+                               WHERE ds >= '${last_30_day}'
+                                 AND ds <= '${last_day}' -- 只保存最近30天
                            ) a
                                LEFT JOIN (
                           SELECT tenant_id
@@ -217,8 +229,8 @@ FROM    (
                                , seller_id
                                , seller_name
                                , ds
-                          FROM dwd.dwd_base_seller_sites_store_df
-                          WHERE ds = '20240809'
+                          FROM amz.dim_base_seller_sites_store_df
+                          WHERE ds = '${last_2_day}'
                       ) b ON a.profile_id = b.profile_id
                           AND a.tenant_id = b.tenant_id
                                LEFT JOIN (
@@ -229,7 +241,7 @@ FROM    (
                               ORDER BY data_dt DESC
                               ) AS rn
                           FROM amz.mid_amzn_asin_to_parent_df
-                          WHERE ds = '20240822'
+                          WHERE ds = '${last_2_day}'
                       ) g ON b.marketplace_id = g.marketplace_id
                           AND a.advertised_asin = g.asin
                       WHERE g.rn = 1

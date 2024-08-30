@@ -1,9 +1,4 @@
---odps sql 
---********************************************************************--
---author:Ada
---create time:2024-03-03 19:17:51
---********************************************************************--
-drop table if exists amz.dim_adv_pro_product_status_df;
+
 CREATE TABLE IF NOT EXISTS amz.dim_adv_pro_product_status_df
 (
     tenant_id            STRING COMMENT '租户ID'
@@ -12,7 +7,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_pro_product_status_df
     ,ad_type             STRING COMMENT '广告类型'
     ,ad_group_id         STRING COMMENT '广告组ID'
     ,campaign_id         STRING COMMENT '广告活动ID'
-    ,`status`            STRING COMMENT '推广品状态：ENABLED, PAUSED, ARCHIVED'
+    ,status            STRING COMMENT '推广品状态：ENABLED, PAUSED, ARCHIVED'
     ,sku                 STRING COMMENT '推广sku'
     ,asin                STRING COMMENT '推广asin'
     ,ad_name             STRING COMMENT '广告组合名称'
@@ -32,7 +27,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_adv_pro_product_status_df
     TBLPROPERTIES ('comment' = '广告推广品最新状态表，全量表日更新')
 ;
 
-INSERT OVERWRITE TABLE amz.dim_adv_pro_product_status_df PARTITION (ds = '20240822')
+INSERT OVERWRITE TABLE amz.dim_adv_pro_product_status_df PARTITION (ds = '${last_day}')
 SELECT  tenant_id
      ,profile_id
      ,ad_id
@@ -48,7 +43,7 @@ SELECT  tenant_id
      ,serving_status
      ,create_date
      ,update_date
-     ,'20240822' data_dt
+     ,'${last_day}' data_dt
      ,current_date() etl_data_dt
 FROM    (
             SELECT  tenant_id
@@ -84,7 +79,7 @@ FROM    (
                              ,create_date
                              ,update_date
                         FROM     amz.dim_adv_pro_product_status_df
-                        WHERE   ds = '20240821'
+                        WHERE   ds = '${last_2_day}'
                         UNION ALL
                         SELECT  tenant_id
                              ,profile_id
@@ -102,7 +97,7 @@ FROM    (
                              ,create_datetime
                              ,update_datetime
                         FROM    ods.ods_report_amzn_ad_product_data_df
-                        WHERE   ds = '20240822'
+                        WHERE   ds = '${last_day}'
                     ) t1
         ) t2
 WHERE   rn = 1

@@ -69,7 +69,7 @@ SELECT  tenant_id
      ,current_date() etl_data_dt
 FROM    amz.mid_amazon_adv_sku_wide_d
 WHERE   ds = '20240823'
-  AND date_format(fba_first_instock_date,'yyyymmdd')<= date_sub(to_date(from_unixtime(unix_timestamp('20240823', 'yyyyMMdd'))), 90)--限制老品
+  AND date_format(fba_first_instock_date,'yyyymmdd')<= date_format(date_sub(to_date(from_unixtime(unix_timestamp('20240823', 'yyyyMMdd'))), 90),'yyyyMMdd')--限制老品
 GROUP BY tenant_id
        ,marketplace_id
        ,marketplace_name

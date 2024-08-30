@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS amz.dim_prd_product_detail_df (
 
 
 
-INSERT overwrite TABLE amz.dim_prd_product_detail_df PARTITION(ds = '20240822')
+INSERT overwrite TABLE amz.dim_prd_product_detail_df PARTITION(ds = '${last_day}')
 SELECT
     t2.tenant_id,
     t1.seller_id,
@@ -76,7 +76,7 @@ FROM
         ROW_NUMBER() OVER(PARTITION BY market_place_id, DIM_asin ORDER BY created_at DESC) AS rn
     FROM
         ods.ods_crawler_amazon_product_details_df t
-    WHERE ds = '20240822'
+    WHERE ds = '${last_day}'
     ) t1
 left join
         (
@@ -89,9 +89,8 @@ left join
             FROM
                 ods.ods_report_authorization_account_df
             WHERE
-                ds = '20240820'
+                ds = '${last_day}'
         ) t2
     on t1.market_place_id = t2.marketplace_id and t1.seller_id = t2.seller_id
-
 WHERE
    t1.rn =1;
